@@ -1,17 +1,59 @@
-import { FC } from "react";
+import { FC, useContext, useState } from "react";
+import { useRouter } from "next/router";
 import { GetStaticPaths, GetStaticProps } from 'next';
+
+import { CartContext } from "@/context";
+
 import { ShopLayout } from "@/components/layouts";
 import { ProductSlideshow, SizeSelector } from "@/components/products";
 import { ItemCounter } from "@/components/ui";
-import { IProduct } from "@/interfaces";
-import { Box, Button, Chip, Grid, Typography } from "@mui/material";
 import { dbProducts } from "@/database";
+
+import { IProduct, ISize } from "@/interfaces";
+import { ICartProduct } from "@/interfaces/cart";
+
+import { Box, Button, Chip, Grid, Typography } from "@mui/material";
 
 interface Props {
     product: IProduct;
 }
 
 const ProductPage: FC<Props> = ({ product }) => {
+    const router = useRouter();
+    const { addProductToCart } = useContext(CartContext);
+
+    const [tempCartProduct, setTempCartProduct] = useState<ICartProduct>({
+        _id: product._id,
+        image: product.images[0],
+        price: product.price,
+        size: undefined,
+        slug: product.slug,
+        title: product.title,
+        gender: product.gender,
+        quantity: 1,
+    });
+
+    const onSelectedSize = (size: ISize) => {
+        // Desestructuramos lo que ya esta en el estado.
+        setTempCartProduct(currentProduct => ({
+            ...currentProduct,
+            size
+        }));
+    };
+
+    const updatedQuantity = (quantity: number) => {
+        setTempCartProduct(currentProduct => ({
+            ...currentProduct,
+            quantity
+        }));
+    };
+
+    const onAddProduct = () => {
+        if (!tempCartProduct.size) return;
+
+        addProductToCart(tempCartProduct);
+        router.push('/cart');
+    };
 
     return (
         <ShopLayout title={product.title} pageDescription={product.description}>
@@ -28,18 +70,36 @@ const ProductPage: FC<Props> = ({ product }) => {
                         {/* Cantidad */}
                         <Box sx={{ my: 2 }}>
                             <Typography variant="subtitle2">Cantidad</Typography>
-                            <ItemCounter />
+                            <ItemCounter
+                                currentValue={tempCartProduct.quantity}
+                                updatedQuantity={updatedQuantity}
+                                maxValue={product.inStock > 10 ? 10 : product.inStock}
+                            />
                             <SizeSelector
-                                // selectedSize={product.sizes[0]}
+                                selectedSize={tempCartProduct.size}
                                 sizes={product.sizes}
+                                onSelectedSize={onSelectedSize}
                             />
                         </Box>
 
                         {/* Agregar al carrito */}
-                        <Button color="secondary" className="circular-btn">
-                            Agregar al carrito
-                        </Button>
-                        <Chip label="No hay disponibles" color="error" variant="outlined" />
+                        {
+                            product.inStock > 0
+                                ? (
+                                    <Button
+                                        color="secondary"
+                                        className="circular-btn"
+                                        onClick={onAddProduct}
+                                    >
+                                        {tempCartProduct.size
+                                            ? "Agregar al carrito"
+                                            : "Seleccione una talla"
+                                        }
+                                    </Button>
+                                )
+                                : <Chip label="No hay disponibles" color="error" variant="outlined" />
+
+                        }
 
                         {/* Descripcion */}
                         <Box sx={{ mt: 3 }}>
