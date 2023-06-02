@@ -33,7 +33,9 @@ const RegisterPage = () => {
             return;
         }
 
-        router.replace('/');
+        // Volvemos a la pagina en la que estaba
+        const destination = router.query.page?.toString() || '/';
+        router.replace(destination);
     };
 
     return (
@@ -103,7 +105,11 @@ const RegisterPage = () => {
                             </Button>
                         </Grid>
                         <Grid item xs={12} display="flex" justifyContent="end">
-                            <Link href="/auth/login" component={NextLink} underline="always">
+                            <Link
+                                href={router.query.page ? `/auth/login?page=${router.query.page}` : `/auth/login`}
+                                component={NextLink}
+                                underline="always"
+                            >
                                 ¿Ya tienes cuenta?
                             </Link>
                         </Grid>

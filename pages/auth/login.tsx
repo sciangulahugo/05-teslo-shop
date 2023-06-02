@@ -30,8 +30,9 @@ const LoginPage = () => {
             return;
         }
 
-        // TODO: navegar a la pagina en la que el usuario estaba
-        router.replace('/');
+        // Volvemos a la pagina en la que estaba
+        const destination = router.query.page?.toString() || '/';
+        router.replace(destination);
     };
 
     return (
@@ -90,7 +91,7 @@ const LoginPage = () => {
                                 fullWidth>Ingresar</Button>
                         </Grid>
                         <Grid item xs={12} display="flex" justifyContent="end">
-                            <Link href="/auth/register" component={NextLink} underline="always">
+                            <Link href={router.query.page ? `/auth/register?page=${router.query.page}` : `/auth/register`} component={NextLink} underline="always">
                                 Crear cuenta
                             </Link>
                         </Grid>
