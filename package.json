@@ -23,6 +23,7 @@
     "bcryptjs": "^2.4.3",
     "eslint": "8.40.0",
     "eslint-config-next": "13.4.1",
+    "jose": "^4.14.4",
     "js-cookie": "^3.0.5",
     "jsonwebtoken": "^9.0.0",
     "mongoose": "^7.1.1",
