@@ -1,5 +1,5 @@
 import { FC, PropsWithChildren, useEffect, useReducer, useState } from 'react';
-import Cookie from 'js-cookie';
+import Cookies from 'js-cookie';
 
 import { CartContext, cartReducer } from './';
 import { ICartProduct } from '@/interfaces/cart';
@@ -11,6 +11,18 @@ export interface CartState {
     subTotal: number;
     tax: number;
     total: number;
+    shippingAddress?: ShippingAddress
+}
+
+export interface ShippingAddress {
+    firstName: string;
+    lastName: string;
+    address: string;
+    addressConfirm?: string;
+    zip: string;
+    city: string;
+    country: string;
+    phone: string;
 }
 
 const CART_INITIAL_STATE: CartState = {
@@ -20,6 +32,7 @@ const CART_INITIAL_STATE: CartState = {
     subTotal: 0,
     tax: 0,
     total: 0,
+    shippingAddress: undefined
 };
 
 export const CartProvider: FC<PropsWithChildren> = ({ children }) => {
@@ -42,14 +55,13 @@ export const CartProvider: FC<PropsWithChildren> = ({ children }) => {
     useEffect(() => {
         try {
             if (!isMounted) {
-                const cart = JSON.parse(Cookie.get("cart") ?? "[]");
+                const cart = JSON.parse(Cookies.get("cart") ?? "[]");
                 dispatch({
                     type: "[Cart] - Load Cart From Cookies | Storage",
                     payload: cart,
                 });
                 setIsMounted(true);
             }
-
         } catch (error) {
             dispatch({
                 type: "[Cart] - Load Cart From Cookies | Storage",
@@ -58,8 +70,37 @@ export const CartProvider: FC<PropsWithChildren> = ({ children }) => {
         }
     }, [isMounted]);
 
+    // Buscamos de las cookies los datos de direccion
     useEffect(() => {
-        if (isMounted) Cookie.set("cart", JSON.stringify(state.cart));
+        try {
+            // Cargamos por primera vez el el addres de las cookies
+            if (!isMounted) {
+                if (Cookies.get("firstName")) {
+                    dispatch({
+                        type: "[Cart] - Load Address From Cookies",
+                        payload: {
+                            firstName: Cookies.get("firstName") || "",
+                            lastName: Cookies.get("lastName") || "",
+                            address: Cookies.get("address") || "",
+                            addressConfirm: Cookies.get("addressConfirm"),
+                            zip: Cookies.get("zip") || "",
+                            city: Cookies.get("city") || "",
+                            country: Cookies.get("country") || "",
+                            phone: Cookies.get("phone") || "",
+                        }
+                    });
+                    setIsMounted(true);
+                }
+            }
+        } catch (error) {
+            // En caso de que no este la cookie y de errors
+
+        }
+    }, [isMounted]);
+
+    // Cada vez que se modifique el cart y este montado el componente, se guarda
+    useEffect(() => {
+        if (isMounted) Cookies.set("cart", JSON.stringify(state.cart));
     }, [state.cart, isMounted]);
 
     // Calculo de precios
@@ -112,6 +153,18 @@ export const CartProvider: FC<PropsWithChildren> = ({ children }) => {
         dispatch({ type: '[Cart] - Remove Product In Car', payload: product });
     };
 
+    const updateAddress = (address: ShippingAddress) => {
+        Cookies.set("firstName", address.firstName);
+        Cookies.set("lastName", address.lastName);
+        Cookies.set("address", address.address);
+        Cookies.set("addressConfirm", address.addressConfirm || '');
+        Cookies.set("zip", address.zip);
+        Cookies.set("city", address.city);
+        Cookies.set("country", address.country);
+        Cookies.set("phone", address.phone);
+        dispatch({ type: '[Cart] - Update Address', payload: address });
+    };
+
     return (
         <CartContext.Provider value={{
             ...state,
@@ -119,7 +172,8 @@ export const CartProvider: FC<PropsWithChildren> = ({ children }) => {
             // Methods
             addProductToCart,
             updateCartQuantity,
-            removeCartProduct
+            removeCartProduct,
+            updateAddress,
         }}>
             {children}
         </CartContext.Provider>
