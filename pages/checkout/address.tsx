@@ -1,9 +1,9 @@
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import { ShopLayout } from "@/components/layouts";
 import { CartContext } from "@/context";
 import { Box, Button, FormControl, Grid, MenuItem, TextField, Typography } from "@mui/material";
 import { countries } from "@/utils";
-import { useForm } from "react-hook-form";
+import { useForm } from 'react-hook-form';
 import Cookies from "js-cookie";
 import { useRouter } from "next/router";
 
@@ -18,28 +18,48 @@ type FormData = {
     phone: string;
 }
 
-const getAddressFromCookies = (): FormData => {
-    return {
-        firstName: Cookies.get("firstName") || "",
-        lastName: Cookies.get("lastName") || "",
-        address: Cookies.get("address") || "",
-        addressConfirm: Cookies.get("addressConfirm") || "",
-        zip: Cookies.get("zip") || "",
-        city: Cookies.get("city") || "",
-        country: Cookies.get("country") || "",
-        phone: Cookies.get("phone") || "",
-    };
-};
+// const getAddressFromCookies = (): FormData => {
+//     return {
+//         firstName: Cookies.get("firstName") || "",
+//         lastName: Cookies.get("lastName") || "",
+//         address: Cookies.get("address") || "",
+//         addressConfirm: Cookies.get("addressConfirm") || "",
+//         zip: Cookies.get("zip") || "",
+//         city: Cookies.get("city") || "",
+//         country: Cookies.get("country") || countries[0].code,
+//         phone: Cookies.get("phone") || "",
+//     };
+// };
 
 const AddressPage = () => {
+    // console.log(getAddressFromCookies());
     const router = useRouter();
+
     const { updateAddress } = useContext(CartContext);
-    const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
-        defaultValues: getAddressFromCookies()
+    const { register, handleSubmit, formState: { errors, defaultValues }, reset } = useForm<FormData>({
+        // defaultValues: getAddressFromCookies()
     });
 
+    useEffect(() => {
+        // Esto solo se ejecuta del lado del cliente
+        const addressFromCookies: FormData = {
+            firstName: Cookies.get("firstName") || "",
+            lastName: Cookies.get("lastName") || "",
+            address: Cookies.get("address") || "",
+            addressConfirm: Cookies.get("addressConfirm") || "",
+            zip: Cookies.get("zip") || "",
+            city: Cookies.get("city") || "",
+            country: Cookies.get("country") || "",
+            phone: Cookies.get("phone") || "",
+        };
+        // Si hacemos un console.log aca, solo lo vemos en el cliente.
+        // console.log(addressFromCookies);
+        reset(addressFromCookies); // Resetea los valores por defecto del formulario
+    }, [reset]);
+
+
     const onSubmitAddress = (data: FormData) => {
-        // Actualizamos el addres en caso de que cambie
+        // Actualizamos el address en caso de que cambie
         updateAddress(data);
         router.push('/checkout/summary');
     };
@@ -123,9 +143,10 @@ const AddressPage = () => {
                                 select
                                 variant="filled"
                                 label="País"
-                                defaultValue={Cookies.get("country") || countries[0].code}
+                                defaultValue={defaultValues?.country || ""}
+                                key={defaultValues?.country} // Hay que agregarle el key para que actualice el componente cada vez que cambia el defaultValues
                                 {...register('country', {
-                                    required: 'Email requerido',
+                                    required: 'País requerido',
                                 })}
                                 error={!!errors.country}
                             >

@@ -1,5 +1,6 @@
 import { FC, PropsWithChildren, useEffect, useReducer } from 'react';
 import { AuthContext, authReducer } from './';
+import { useSession, signOut } from 'next-auth/react';
 import { IUser } from '@/interfaces';
 import { tesloApi } from '@/api';
 import Cookies from 'js-cookie';
@@ -18,29 +19,39 @@ const AUTH_INITIAL_STATE: AuthState = {
 
 export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
     const [state, dispatch] = useReducer(authReducer, AUTH_INITIAL_STATE);
+    const { data, status } = useSession();
     const router = useRouter();
 
+    // Si esta logueado, lo autenticamos con los datos de data
     useEffect(() => {
-        checkToken();
-    }, []);
-
-    const checkToken = async (): Promise<boolean> => {
-        if (!Cookies.get('token')) return false;
-        try {
-            const { data } = await tesloApi.get('/user/validate-token');
-            const { token, user } = data;
-
-            // Guardamos la cookie
-            Cookies.set('token', token);
-
-            dispatch({ type: '[Auth] - Login', payload: user });
-            return true;
-        } catch (error) {
-
-            Cookies.remove('token');
-            return false;
+        if (status === 'authenticated') {
+            // console.log(data.user);
+            dispatch({ type: "[Auth] - Login", payload: data?.user as IUser });
         }
-    };
+    }, [status, data]);
+
+    // Autenticacion manual
+    // useEffect(() => {
+    //     checkToken();
+    // }, []);
+
+    // const checkToken = async (): Promise<boolean> => {
+    //     if (!Cookies.get('token')) return false;
+    //     try {
+    //         const { data } = await tesloApi.get('/user/validate-token');
+    //         const { token, user } = data;
+
+    //         // Guardamos la cookie
+    //         Cookies.set('token', token);
+
+    //         dispatch({ type: '[Auth] - Login', payload: user });
+    //         return true;
+    //     } catch (error) {
+
+    //         Cookies.remove('token');
+    //         return false;
+    //     }
+    // };
 
     const loginUser = async (email: string, password: string): Promise<boolean> => {
         try {
@@ -79,10 +90,22 @@ export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
     };
 
     const logout = () => {
-        Cookies.remove('token');
         Cookies.remove('cart');
+        // Limpiamos los datos de domicilio
+        Cookies.remove("firstName");
+        Cookies.remove("lastName");
+        Cookies.remove("address");
+        Cookies.remove("addressConfirm");
+        Cookies.remove("zip");
+        Cookies.remove("city");
+        Cookies.remove("country");
+        Cookies.remove("phone");
+
+        // Cerramos sesion con NextAuth
+        signOut();
         // Recargamos para limpiar todo
-        router.reload();
+        // Cookies.remove('token');
+        // router.reload();
     };
 
     return (
