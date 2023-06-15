@@ -10,13 +10,18 @@ import Cookies from 'js-cookie';
 import { useRouter } from 'next/router';
 
 const SummaryPage = () => {
-    const { shippingAddress, numberOfItems } = useContext(CartContext);
+    const { shippingAddress, numberOfItems, createOrder } = useContext(CartContext);
     const router = useRouter();
     useEffect(() => {
         if (!Cookies.get('firstName')) {
             router.push('/checkout/address');
         }
     }, [router]);
+
+    // Cuando damos click en crear orden
+    const onCreateOrder = () => {
+        createOrder();
+    };
 
     if (!shippingAddress)
         return <></>;
@@ -53,7 +58,11 @@ const SummaryPage = () => {
                             </Box>
                             <OrderSummary />
                             <Box sx={{ mt: 3 }}>
-                                <Button color="secondary" className="circular-btn" fullWidth>Confirmar orden</Button>
+                                <Button
+                                    onClick={onCreateOrder}
+                                    color="secondary"
+                                    className="circular-btn"
+                                    fullWidth>Confirmar orden</Button>
                             </Box>
                         </CardContent>
                     </Card>

@@ -3,6 +3,8 @@ import Cookies from 'js-cookie';
 
 import { CartContext, cartReducer } from './';
 import { ICartProduct } from '@/interfaces/cart';
+import { IOrder, ShippingAddress } from '@/interfaces';
+import { tesloApi } from '@/api';
 
 export interface CartState {
     isLoaded: boolean;
@@ -14,16 +16,7 @@ export interface CartState {
     shippingAddress?: ShippingAddress
 }
 
-export interface ShippingAddress {
-    firstName: string;
-    lastName: string;
-    address: string;
-    addressConfirm?: string;
-    zip: string;
-    city: string;
-    country: string;
-    phone: string;
-}
+
 
 const CART_INITIAL_STATE: CartState = {
     isLoaded: false,
@@ -165,6 +158,34 @@ export const CartProvider: FC<PropsWithChildren> = ({ children }) => {
         dispatch({ type: '[Cart] - Update Address', payload: address });
     };
 
+    const createOrder = async () => {
+        // Analizamos la direccion
+        if (!state.shippingAddress)
+            throw new Error('Address is empty');
+
+        const body: IOrder = {
+            // Para este punto, el size del producto es obligatorio
+            orderItems: state.cart.map((product) => ({
+                ...product,
+                size: product.size!
+            })),
+            shippingAddress: state.shippingAddress,
+            numberOfItems: state.numberOfItems,
+            subTotal: state.subTotal,
+            tax: state.tax,
+            total: state.total,
+            isPaid: false
+        };
+
+        try {
+            // Aca llamamos a nuestra api para cargar los datos
+            const { data } = await tesloApi.post('/orders', body);
+            console.log({ data });
+        } catch (error) {
+
+        }
+    };
+
     return (
         <CartContext.Provider value={{
             ...state,
@@ -174,6 +195,9 @@ export const CartProvider: FC<PropsWithChildren> = ({ children }) => {
             updateCartQuantity,
             removeCartProduct,
             updateAddress,
+
+            // Orders
+            createOrder,
         }}>
             {children}
         </CartContext.Provider>
