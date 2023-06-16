@@ -22,7 +22,7 @@ const orderSchema = new Schema({
         country: { type: String, required: true },
         phone: { type: String, required: true },
     },
-    paymentResult: { type: String, required: true },
+    paymentResult: { type: String, required: false },
     numberOfItems: { type: Number, required: true },
     subTotal: { type: Number, required: true },
     tax: { type: Number, required: true },

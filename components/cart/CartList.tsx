@@ -5,12 +5,14 @@ import { Box, Button, CardActionArea, CardMedia, Grid, Link, Typography } from "
 import { ItemCounter } from '../ui';
 import { CartContext, cartReducer } from '@/context';
 import { ICartProduct } from '@/interfaces/cart';
+import { IOrderItem } from '@/interfaces';
 
 interface Props {
     editable?: boolean;
+    products?: IOrderItem[];
 }
 
-const CartList: FC<Props> = ({ editable = false }) => {
+const CartList: FC<Props> = ({ editable = false, products }) => {
     const { cart, updateCartQuantity, removeCartProduct } = useContext(CartContext);
 
     const onNewCartQuantityValue = (product: ICartProduct, newQuantityValue: number) => {
@@ -22,9 +24,11 @@ const CartList: FC<Props> = ({ editable = false }) => {
         removeCartProduct(product);
     };
 
+    const productsToShow = products ? products : cart;
+
     return (
         <>
-            {cart.map(product => (
+            {productsToShow.map(product => (
                 <Grid container spacing={2} key={product.slug + product.size} sx={{ mb: 1 }}>
                     <Grid item xs={3}>
                         {/* TODO: llevar a la pagina del producto */}
@@ -46,7 +50,7 @@ const CartList: FC<Props> = ({ editable = false }) => {
                                 editable
                                     ? <ItemCounter
                                         currentValue={product.quantity}
-                                        updatedQuantity={(value) => { onNewCartQuantityValue(product, value); }}
+                                        updatedQuantity={(value) => { onNewCartQuantityValue(product as ICartProduct, value); }}
                                         maxValue={10}
                                     />
                                     : <Typography variant="subtitle1">{product.quantity}</Typography>
@@ -60,7 +64,7 @@ const CartList: FC<Props> = ({ editable = false }) => {
                                 <Button
                                     variant="text"
                                     color="secondary"
-                                    onClick={() => onClickRemove(product)}
+                                    onClick={() => onClickRemove(product as ICartProduct)}
                                 >
                                     Remover
                                 </Button>

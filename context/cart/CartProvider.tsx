@@ -5,6 +5,7 @@ import { CartContext, cartReducer } from './';
 import { ICartProduct } from '@/interfaces/cart';
 import { IOrder, ShippingAddress } from '@/interfaces';
 import { tesloApi } from '@/api';
+import axios from 'axios';
 
 export interface CartState {
     isLoaded: boolean;
@@ -158,7 +159,7 @@ export const CartProvider: FC<PropsWithChildren> = ({ children }) => {
         dispatch({ type: '[Cart] - Update Address', payload: address });
     };
 
-    const createOrder = async () => {
+    const createOrder = async (): Promise<{ hasError: boolean; message: string; }> => {
         // Analizamos la direccion
         if (!state.shippingAddress)
             throw new Error('Address is empty');
@@ -179,10 +180,26 @@ export const CartProvider: FC<PropsWithChildren> = ({ children }) => {
 
         try {
             // Aca llamamos a nuestra api para cargar los datos
-            const { data } = await tesloApi.post('/orders', body);
+            const { data } = await tesloApi.post<IOrder>('/orders', body);
             console.log({ data });
-        } catch (error) {
 
+            // TODO: limpiar el carrito
+            dispatch({ type: '[Cart] - Order Complete' });
+
+            return {
+                hasError: false,
+                message: data._id!
+            };
+        } catch (error) {
+            if (axios.isAxiosError(error))
+                return {
+                    hasError: true,
+                    message: error.response?.data.message
+                };
+            return {
+                hasError: true,
+                message: 'Error, try again'
+            };
         }
     };
 
