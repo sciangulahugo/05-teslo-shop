@@ -6,7 +6,7 @@ import { getToken } from "next-auth/jwt";
 export async function middleware(req: NextRequest) {
     // Middleware para las paginas de checkout 
     const session = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-    console.log(session);
+    // console.log(session);
 
     if (!session) {
         const { origin, pathname } = req.nextUrl.clone();
